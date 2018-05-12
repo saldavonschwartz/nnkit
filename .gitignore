@@ -1,0 +1,10 @@
+*.in
+*.out
+
+.idea/workspace.xml
+.idea/libraries
+.idea/tasks.xml
+__pycache__
+*.py[cod]
+/venv/*
+.DS_Store

@@ -1,0 +1,84 @@
+# The MIT License (MIT)
+#
+# Copyright (c) 2018 Federico Saldarini
+# https://www.linkedin.com/in/federicosaldarini
+# https://github.com/saldavonschwartz
+# http://0xfede.io
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+import numpy as np
+from . import NetOp
+
+
+class BatchNorm(NetOp):
+    """Batch Normalization:
+
+    y = (x_i-μ_B)/σ_B * γ + β
+
+    Where:
+    B = batch size.
+    μ_B = 1/B * ∑{B}:x_i = mean of a feature over a batch.
+    σ_B = √(σ_B^2) = √(1/B * ∑{B}:(x_i-μ_B)^2 = std deviation of a feature over a batch.
+    """
+    def __init__(self, x, gamma, beta, avgMean, avgVar, mRate, train):
+        """
+        :param x: input.
+        :param gamma: learnable variance.
+        :param beta: learnable mean.
+        :param avgMean: EMA mean, computed in training and used in prediction.
+        :param avgVar: EMA variance, computed in training and used in prediction.
+        """
+        if train:
+            mean = np.mean(x.data, axis=0)
+            avgMean += (1. - mRate) * (avgMean - mean)
+        else:
+            mean = avgMean
+
+        xCenter = x.data - mean
+
+        if train:
+            var = np.mean(xCenter ** 2, axis=0)
+            avgVar += (1. - mRate) * (avgVar - var)
+        else:
+            var = avgVar
+
+        xNormalized = xCenter / np.sqrt(var + 1e-8)
+
+        super().__init__(
+            xNormalized * gamma.data + beta.data,
+            x, gamma, beta
+        )
+
+        self.cache = var, xCenter, xNormalized
+
+    def _back(self, x, gamma, beta):
+        var, xCenter, xNormalized = self.cache
+
+        gamma.g += np.sum(self.g * xNormalized, axis=0)
+        beta.g += np.sum(self.g, axis=0)
+
+        bSize = len(x.data)
+        t1 = 1/bSize * gamma.data * (var + 1e-8) ** (-1/2)
+        t2 = bSize * self.g
+        t3 = np.sum(self.g, axis=0)
+        t4 = xCenter * (var + 1e-8) ** -1 * np.sum(self.g * xCenter, axis=0)
+        x.g += t1 * (t2 - t3 - t4)
+
+        super()._back()
