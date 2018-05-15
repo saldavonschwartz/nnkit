@@ -14,7 +14,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     keywords='neural networks ai AI',
-    url='http://github.com/saldavonschwartz/nnkit',
+    url='http://github.com/saldavonschwartz/nnkit.git',
     author='Federico Saldarini',
     author_email='fede@0xfede.io',
     license='MIT',
