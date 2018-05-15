@@ -3,7 +3,7 @@ from codecs import open
 from os import path
 
 root = path.abspath(path.dirname(__file__))
-with open(path.join(root, 'README'), encoding='utf-8') as readme:
+with open(path.join(root, 'README.md'), encoding='utf-8') as readme:
     long_description = readme.read()
 
 setup(
