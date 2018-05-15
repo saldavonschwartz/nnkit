@@ -28,62 +28,72 @@ from . import NetOp
 
 
 class L2Reg(NetOp):
-    """L2 Norm (squared) Regularization:
+    """L2 (squared) Norm Regularization.
 
-    y = loss + rate/(2*B) * ∑{Params}(p_i^2)
+    y = loss + λ/2B * ∑{P}(||p_i||^2)
+
+    Where:
+    . λ: regularization hyperparameter. i.e.: by how much to penalize large parameter values.
+    . B: batch size.
+    . P: parameters to penalize.
+    . ||p_i||^2: Frobenius squared norm of a parameter.
+
+    This node should be appended after a loss node during training.
     """
-    def __init__(self, l, ps, r, t):
+    def __init__(self, l, params, r, t):
         """
-        :param l: loss from forward pass.
-        :param ps: parameters for which to compute norm.
+        :param l: NetVar: loss from forward pass.
+        :param params: list of NetVar: parameters for which to compute norm.
         :param r: by how much to penalize overfitting.
-        :param target: truth as passed to loss, (to derive batch size).
+        :param t: NetVar: target as passed to loss (to derive batch size).
         """
         b = len(t.data)
-        frobeniusSqr = np.sum([np.linalg.norm(p.data)**2 for p in ps])
+        frobeniusSquared = np.sum([np.linalg.norm(p.data)**2 for p in params])
 
         super().__init__(
-            l.data + r / (2 * b) * frobeniusSqr,
-            l, *ps
+            l.data + r / (2 * b) * frobeniusSquared,
+            l, *params
         )
 
         self.cache = r, b
 
-    def _back(self, l, *ps):
+    def _back(self, l, *params):
         r, b = self.cache
         l.g += self.g
 
-        for p in ps:
+        for p in params:
             p.g += r / b * p.data
 
         super()._back()
 
 
 class Dropout(NetOp):
-    """Dropout Regularization
+    """Dropout Regularization.
 
     y = xb/k
 
     Where:
-    b = random boolean tensor.
-    k = probability used to generate b.
+    . b: random boolean tensor which masks out some components in x.
+    . k: [0-1] probability used to generate b.
+
+    This node should be removed (or k set to 1.) when not training.
     """
     def __init__(self, x, k=0.8):
         """
-        :param x: input.
-        :param k: probability that a unit will NOT be masked.
+        :param x: NetVar: input.
+        :param k: [0-1] probability that a unit will NOT be masked.
         """
-        chance = np.random.rand(*x.data.shape) < k
+        dropout = np.random.rand(*x.data.shape) < k
         super().__init__(
-            x.data * chance / k,
+            x.data * dropout / k,
             x
         )
 
-        self.cache = chance
+        self.cache = dropout
 
     def _back(self, x):
-        chance = self.cache
-        x.g += self.g * chance
+        dropout = self.cache
+        x.g += self.g * dropout
         super()._back()
 
 

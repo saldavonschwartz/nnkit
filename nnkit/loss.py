@@ -28,17 +28,19 @@ from . import NetOp
 
 
 class L1Loss(NetOp):
-    """L1 Norm Loss:
+    """L1 Norm Loss.
 
-    y = 1/B ∑{B}(|p-t|)
+    y = 1/B ∑{B}(|p_i-t_i|)
 
     Where:
-    B: batch size.
+    . p: prediction.
+    . t: target.
+    . B: batch size.
     """
     def __init__(self, p, t):
         """
-        :param p: prediction.
-        :param t: target.
+        :param p: NetVar: prediction.
+        :param t: NetVar: target.
         """
         super().__init__(
             np.mean(np.abs(p.data - t.data)),
@@ -56,17 +58,19 @@ class L1Loss(NetOp):
 
 
 class L2Loss(NetOp):
-    """L2 Norm (squared) Loss:
+    """L2 (squared) Norm Loss.
 
-    y = 1/2B * ∑{B}(p-t)^2
+    y = 1/2B * ∑{B}(p_i-t_i)^2
 
     Where:
-    B = batch size.
+    . p: prediction.
+    . t: target.
+    . B: batch size.
     """
     def __init__(self, p, t):
         """
-        :param p: prediction.
-        :param t: target.
+        :param p: NetVar: prediction.
+        :param t: NetVar: target.
         """
         super().__init__(
             .5 * np.mean(np.square(p.data - t.data)),
@@ -84,17 +88,19 @@ class L2Loss(NetOp):
 
 
 class CELoss(NetOp):
-    """Cross Entropy Loss:
+    """Cross Entropy Loss.
 
-    y = -1/B * ∑{B}t*ln(p)
+    y = -1/B * ∑{B}t_i*ln(p_i)
 
     Where:
-    B = batch size.
+    . p: prediction.
+    . t: target.
+    . B: batch size.
     """
     def __init__(self, p, t):
         """
-        :param p: prediction.
-        :param t: target.
+        :param p: NetVar: prediction.
+        :param t: NetVar: target.
         """
         b = len(t.data)
 

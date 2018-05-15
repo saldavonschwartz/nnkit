@@ -28,13 +28,13 @@ from . import NetOp
 
 
 class ReLU(NetOp):
-    """Rectified linear unit:
+    """Rectified linear unit activation.
 
     y = max(0, x)
     """
     def __init__(self, x):
         """
-        :param x: input.
+        :param x: NetVar: input.
         """
         super().__init__(
             np.maximum(0, x.data),
@@ -47,13 +47,13 @@ class ReLU(NetOp):
 
 
 class LReLU(NetOp):
-    """Leaky rectified linear unit:
+    """Leaky rectified linear activation.
 
     y = max(sx, x)
     """
     def __init__(self, x, s=0.01):
         """
-        :param x: input.
+        :param x: NetVar: input.
         :param s: negative slope.
         """
         super().__init__(
@@ -70,13 +70,13 @@ class LReLU(NetOp):
 
 
 class Sigmoid(NetOp):
-    """Sigmoid:
+    """Sigmoid activation.
 
     y = 1/(1+e^-x)
     """
     def __init__(self, x):
         """
-        :param x: input.
+        :param x: NetVar: input.
         """
         super().__init__(
             1. / (1. + np.exp(-x.data)),
@@ -89,13 +89,13 @@ class Sigmoid(NetOp):
 
 
 class Tanh(NetOp):
-    """Hyperbolic Tangent:
+    """Hyperbolic Tangent activation.
 
     y = (e^x - e^-x)/(e^x + e^-x)
     """
     def __init__(self, x):
         """
-        :param x: input.
+        :param x: NetVar: input.
         """
         ex, _ex = np.exp(x.data), np.exp(-x.data)
         super().__init__(
@@ -109,13 +109,13 @@ class Tanh(NetOp):
 
 
 class SoftMax(NetOp):
-    """Softmax:
+    """Softmax activation.
 
     y = e^x_i/∑{X}:x_j, ∀x_i in X:
     """
     def __init__(self, x):
         """
-        :param x: input.
+        :param x: NetVar: input.
         """
         ex = np.exp(x.data - np.max(x.data, axis=1, keepdims=True))
 

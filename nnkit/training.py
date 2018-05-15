@@ -33,8 +33,12 @@ class Optimizer:
     which consists of adjusting parameter values in the direction opposite of the gradient of
     the network output w.r.t. each parameter.
 
-    At a minimum, an optimizer has a learn rate which is usually between 0 and 1 and determines
+    Attributes:
+    . learnRate: [0,1]
     how big of an adjustment each parameter undergoes during an optimization step.
+
+    . params:
+    parameters to adjust during an optimization step.
     """
     def __init__(self, params):
         """Create a new optimizer for a list of parameters.
@@ -60,14 +64,13 @@ class GD(Optimizer):
     m = β1m + (1-β1)df/dp
     p = p - αm
 
-    Where:
-    . m is an exponential moving average of the partial derivative of the network output
-    w.r.t each parameter.
+    Attributes:
+    . learnRate: α ∈ [0,1]
+    how big of an adjustment each parameter undergoes during an optimization step.
 
-    . β1:[0,1] is the momentum term, which controls over how many samples the average takes place.
-    If set to 0 momentum is disabled.
-
-    . α:[0,1] is the learning rate.
+    . momentum: β1 ∈ [0,1]
+    over how many samples the exponential moving average m takes place.
+    If set to 0 momentum is disabled and the algorithm becomes simply gradient descent.
     """
     def __init__(self, params):
         super().__init__(params)
@@ -89,16 +92,16 @@ class Adam(GD):
     r = β2r + (1-β2)(df/dp)^2
     p = p - α m/√(r + 1e-8)
 
+    Attributes:
+    . learnRate: α ∈ [0,1]
+    how big of an adjustment each parameter undergoes during an optimization step.
 
-    Where:
-    . m, β1 and α are the exponential moving average, momentum and learn rate as
-    discussed in the gradient descent optimizer (GD).
+    . momentum: β1 ∈ [0,1]
+    over how many samples the exponential moving average m takes place.
+    If set to 0 momentum is disabled and the algorithm becomes RMSProp
 
-    . r and β2 work similar to m and β1 but for a moving average of squares of the gradients.
-
-    . m/√(r + 1e-8) is the root mean square term with momentum.
-
-    Setting momentum to 0 turns this algorithm into RMSProp.
+    . momentum: β2 ∈ [0,1]
+    over how many samples the exponential squared moving average r takes place.
     """
     def __init__(self, params):
         super().__init__(params)
@@ -112,35 +115,10 @@ class Adam(GD):
             p.data -= self.learnRate * (self.m[i] / np.sqrt(self.r[i] + 1e-8))
 
 
-def miniBatch(data, **kwargs):
-    """Helper to generate mini batches out of a whole dataset.
-
-    :param data: A list with 2 elements each in turn being lists or numpy arrays.
-    The first element should be the inputs to the network and the second the expected (truth / target)
-    network output for each input.
-
-    :param kwargs:
-    . 'size': In this case as many batches as possible will be generated, each of size 'size' but
-    for the last one, which will have 'size' or less elements.
-
-    . 'count': In this case 'count' batches will be generated, all having some fixed size that allows
-    for the requested count, but for the last batch, which will have 'size' or less elements.
-
-    :return: On each iteration, a batch in the form of a tuple (data[0], data[1]).
-    """
-    if kwargs.get('size', None):
-        bSize = kwargs['size']
-    elif kwargs.get('count', None):
-        bSize = int(np.ceil(len(data[0]) / kwargs['count']))
-
-    for i in range(0, len(data[0]), bSize):
-        yield data[0][i:i + bSize], data[1][i:i + bSize], i
-
-
 def decay(step, totalSteps, minmax):
-    """Helper to exponentially decay a value over a fixed number of time steps.
+    """Exponentially decay a value over a fixed number of steps.
 
-    Useful for implementing hyperparameter decay (i.e. learning rate decay).
+    Useful for implementing hyperparameter decay (i.e. learn rate decay).
     """
     slope = (minmax[0] - minmax[1]) / totalSteps
     val = max(slope * step + minmax[1], minmax[0])

@@ -27,19 +27,25 @@ import numpy as np
 """The element type of numpy arrays in the .data property of all nodes throughout the framework."""
 dtype = np.float32
 
+"""Framework version"""
+version = '1.0'
+
 
 class NetVar:
     """Base class for all nodes in a network holding a value, which can be optionally learned.
 
-    Variables are the building blocks of a network and hold data (their value )which gets
-    propagated and transformed throughout a network. They also have a gradient property
-    which holds the gradient of a network's output w.r.t. the variable.
+    Variables are the building blocks of a network and hold data (their value) which gets
+    propagated and transformed throughout a network. They also have a gradient (g) property
+    which holds the partial derivative of a network's implemented function w.r.t. the variable.
 
-    Whether a variable has its gradient computed depends on the implementation of an
+    Whether derivatives w.r.t a variable are computed depends on the implementation of an
     operator node taking the variable as an input.
 
-    Whether a variable is optimized as a learnable parameter of the model depends on it
-    having its gradient computed and it being passed to an optimizer's list of parameters.
+    Whether a variable is optimized as a learnable parameter of a network depends on derivatives
+    for it being computed and it being passed to an optimizer's list of parameters.
+
+    Attributes:
+    . g: this node's gradient (technically, the partial derivative of a network's output w.r.t. this variable).
     """
     def __init__(self, data=None):
         """Create a variable, optionally initializing it to a value.
@@ -47,8 +53,7 @@ class NetVar:
         :param data: an optional list or numpy array to initialize the variable with.
         This can be modified or completely replaced after initialization too.
 
-        A variable's data also determines the shape of its gradient (g, a numpy array with
-        the gradient of the network's output w.r.t the variable).
+        A variable's data also determines the shape of its gradient.
         """
         self.g, self._data = None, None
 
@@ -82,11 +87,7 @@ class NetVar:
         self.reset()
 
     def reset(self):
-        """Reset this variable's gradient.
-
-        Resetting a the gradient sets it to a numpy array of zeroes, with the
-        shape of the variable's data.
-        """
+        """Reset this variable's gradient."""
         if self.data is None:
             self.g = None
         else:
@@ -103,6 +104,9 @@ class NetOp(NetVar):
     Operators take other variables as inputs (which become their parents in
     the network) and their values are the result of applying transformations on
     those inputs. They also provide the entry point to backpropagation of gradients.
+
+    Attributes:
+    . parents: this node's parents.
     """
     def __init__(self, data, *parents):
         """Create an operator and compute its forward pass.
@@ -116,8 +120,7 @@ class NetOp(NetVar):
         3. Optionally save any required data for the backprop pass (i.e. in a cache property).
 
         :param data: the result of a subclass forward pass.
-
-        :param parents: the parent nodes of a subclass.
+        :param parents: list(NetVar), the parent nodes of a subclass.
         """
         super().__init__(data)
         self.parents = parents
@@ -129,25 +132,27 @@ class NetOp(NetVar):
         self._back(*self.parents)
 
     def _back(self, *parents):
-        """
-        Subclasses should override this method or provide one with explicit parents.
-        The subclass method should:
-        1. Update the parent's gradients.
-        2. Call this implementation to backprop to the parents.
-
-        :param parents: dummy parameter to make this method's signature compatible with
-        subclasses declaring explicit parents.
-
-        Subclasses should not pass anything to this method when calling super()._back().
-        However, subclasses can override this signature in which case they will get the
-        same data they already have in self.parents.
-        """
+        # Compute this node's partial derivatives w.r.t its parents (a.k.a.: parents' gradients).
+        #
+        # Subclasses should override this method or provide one with explicit parents.
+        #
+        # The subclass method should:
+        # 1. Update parents' gradients.
+        # 2. Call this implementation (without arguments) to backprop to the parents.
+        #
+        # :param parents: the parents of this node. Subclasses can use this
+        # as is or explicitly enumerate parents in their implementation signature.
         for p in [p for p in self.parents if isinstance(p, NetOp)]:
             p._back(*p.parents)
 
 
 class FFN:
-    """Convenience class to implement a feed forward neural network (FFN)."""
+    """Convenience class to implement a feed forward neural network (FFN).
+
+    Attributes:
+    . topology: a list of tuples descriping each layer in the network (see __init__).
+    . layers: a list of instantiated operators in the network, recreated on each forward pass (see __init__).
+    """
     def __init__(self, *topology):
         """Creates a feed forward network with an initial topology.
 
@@ -169,8 +174,8 @@ class FFN:
         self.layers = []
 
     @property
-    def vars(self):
-        """Get the network's fixed variables.
+    def params(self):
+        """Get the network's parameters (fixed variables).
 
         In general, these are the learnable parameters in the model.
         However, whether any of these variables are learned actually depends on whether
@@ -188,7 +193,7 @@ class FFN:
 
         :param x: input to the network.
 
-        :return: the value of the last node in the network. This is isually
+        :return: the value of the last node in the network. This is usually
         the networks prediction but could also be the network loss if the last
         node in the network is a loss node (i.e.: during training).
         """
@@ -200,22 +205,15 @@ class FFN:
 
         return x.data
 
-    def back(self, reset=True):
-        """Compute gradients by executing the network's backprop pass.
+    def back(self):
+        """Compute gradient of this network (i.e. backprop pass)."""
 
-        :param reset: Whether node gradients be reset before doing the back pass.
-        If false, gradients from this back pass will accumulate with those from previous passes.
-        """
-        if reset:
-            self.reset()
+        # Gradient accumulation is not yet fully supported, so we reset all gradients.
+        for p in self.params:
+            p.reset()
 
         # Backprop starts at the end (output) of the net:
         self.layers[-1].back()
-
-    def reset(self):
-        """Reset gradients for all nodes in the network."""
-        for p in self.params:
-            p.reset()
 
 
 # Import all other modules so one can access them by importing just nnkit
@@ -224,9 +222,10 @@ class FFN:
 from .initialization import *
 from .regularization import *
 from .normalization import *
-from .serialization import *
-from .optimization import *
+from .training import *
 from .activation import *
 from .arithmetic import *
 from .loss import *
 
+# This one needs access to all others, which is why is last in the import list:
+from .serialization import *

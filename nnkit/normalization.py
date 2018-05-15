@@ -28,36 +28,39 @@ from . import NetOp
 
 
 class BatchNorm(NetOp):
-    """Batch Normalization:
+    """Batch Normalization.
 
-    y = (x_i-μ_B)/σ_B * γ + β
+    y = (x-μ_B)/σ_B * γ + β
 
     Where:
-    B = batch size.
-    μ_B = 1/B * ∑{B}:x_i = mean of a feature over a batch.
-    σ_B = √(σ_B^2) = √(1/B * ∑{B}:(x_i-μ_B)^2 = std deviation of a feature over a batch.
+    . B: batch size.
+    . μ_B: 1/B * ∑{B}:x = mean of a feature over a batch.
+    . σ_B: √(σ_B^2 + 1e-8) = √((1/B * ∑{B}:(x-μ_B)^2) + 1e-8) = std deviation of a feature over a batch.
+    . γ: learnable variance.
+    . β: learnable mean.
     """
-    def __init__(self, x, gamma, beta, avgMean, avgVar, mRate, train):
+    def __init__(self, x, gamma, beta, avgVar, avgMean, useAvg):
         """
-        :param x: input.
-        :param gamma: learnable variance.
-        :param beta: learnable mean.
-        :param avgMean: EMA mean, computed in training and used in prediction.
-        :param avgVar: EMA variance, computed in training and used in prediction.
+        :param x: NetVar: input.
+        :param gamma: NetVar: size (|x|, 1): learnable variance (should be initialized to 1).
+        :param beta: NetVar: size (|x|, 1): learnable mean (should be initialized to 0).
+        :param avgVar: NetVar: size (|x|, 1): average learned variance, computed in training and used in prediction.
+        :param avgMean: NetVar: size (|x|, 1): average learned mean, computed in training and used in prediction.
+        :param useAvg: whether to compute batch mean and variance or use averaged values.
         """
-        if train:
-            mean = np.mean(x.data, axis=0)
-            avgMean += (1. - mRate) * (avgMean - mean)
+        if useAvg:
+            mean = avgMean.data
         else:
-            mean = avgMean
+            mean = np.mean(x.data, axis=0)
+            avgMean.data = 0.9 * avgMean.data + 0.1 * mean
 
         xCenter = x.data - mean
 
-        if train:
-            var = np.mean(xCenter ** 2, axis=0)
-            avgVar += (1. - mRate) * (avgVar - var)
+        if useAvg:
+            var = avgVar.data
         else:
-            var = avgVar
+            var = np.mean(xCenter ** 2, axis=0)
+            avgVar.data = 0.9 * avgVar.data + 0.1 * var
 
         xNormalized = xCenter / np.sqrt(var + 1e-8)
 

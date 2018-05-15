@@ -23,14 +23,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from . import NetVar, FFN
-
+from . import *
 import json as jsn
 import gzip
 
 
 def save(net, path):
-    """Save a model to a gziped json file."""
+    """Save a net topology (list of tuples) to a gziped json file."""
     json = []
 
     for n in net.topology:
@@ -48,7 +47,7 @@ def save(net, path):
 
 
 def load(path):
-    """Load a FFN model from a gziped json file."""
+    """Load net topology (list of tuples) from a gziped json file."""
     with gzip.open(path + '.model.gz', 'rb') as file:
         json = jsn.load(file)
         topology = [(
@@ -62,4 +61,4 @@ def load(path):
             for d in json
         ]
 
-        return FFN(*topology)
+        return topology

@@ -28,14 +28,15 @@ from . import NetOp
 
 
 class Multiply(NetOp):
-    """Tensor Multiplication:
+    """Multiplication.
 
     y = xw
     """
     def __init__(self, x, w):
         """
-        :param x: input 1.
-        :param w: input 2.
+        :param x: NetVar: input 1.
+
+        :param w: NetVar: input 2.
         """
         super().__init__(
             x.data @ w.data,
@@ -49,14 +50,14 @@ class Multiply(NetOp):
 
 
 class Add(NetOp):
-    """Tensor Addition:
+    """Addition.
 
     y = x+b
     """
     def __init__(self, x, b):
         """
-        :param x: input 1.
-        :param b: input 2.
+        :param x: NetVar: input 1.
+        :param b: NetVar: input 2.
         """
         super().__init__(
             x.data + b.data,
