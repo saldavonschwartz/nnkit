@@ -3,13 +3,12 @@ from codecs import open
 from os import path
 
 root = path.abspath(path.dirname(__file__))
-with open(path.join(root, 'README.md'), encoding='utf-8') as readme:
+with open(path.join(root, 'README'), encoding='utf-8') as readme:
     long_description = readme.read()
-
 
 setup(
     name='nnkit',
-    version='1.0',
+    version='1.1',
     description='NNKit: A dynamic neural network framework.',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -22,3 +21,4 @@ setup(
     install_requires=['numpy'],
     zip_safe=False
 )
+
