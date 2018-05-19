@@ -8,7 +8,7 @@ with open(path.join(root, 'README.md'), encoding='utf-8') as readme:
 
 setup(
     name='nnkit',
-    version='1.3',
+    version='1.3.1',
     description='NNKit: A dynamic neural network framework.',
     long_description=long_description,
     long_description_content_type='text/markdown',

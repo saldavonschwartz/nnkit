@@ -28,7 +28,7 @@ import numpy as np
 dtype = np.float32
 
 """Framework version"""
-version = '1.3'
+version = '1.3.1'
 
 
 class NetVar:
@@ -174,8 +174,8 @@ class FFN:
         self.layers = []
 
     @property
-    def params(self):
-        """Get the network's parameters (fixed variables).
+    def vars(self):
+        """Get the network's fixed variables.
 
         In general, these are the learnable parameters in the model.
         However, whether any of these variables are learned actually depends on whether
@@ -207,11 +207,6 @@ class FFN:
 
     def back(self):
         """Compute gradient of this network (i.e. backprop pass)."""
-
-        # Gradient accumulation is not yet fully supported, so we reset all gradients.
-        for p in self.params:
-            p.reset()
-
         # Backprop starts at the end (output) of the net:
         self.layers[-1].back()
 

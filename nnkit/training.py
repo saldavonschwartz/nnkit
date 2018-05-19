@@ -37,7 +37,7 @@ class Optimizer:
     . learnRate: [0,1]
     how big of an adjustment each parameter undergoes during an optimization step.
 
-    . params:
+    . vars:
     parameters to adjust during an optimization step.
     """
     def __init__(self, params):
@@ -81,6 +81,7 @@ class GD(Optimizer):
         for i, p in enumerate(self.params):
             self.m[i] = self.momentum * self.m[i] + (1 - self.momentum) * p.g
             p.data -= self.learnRate * self.m[i]
+            p.reset()
 
 
 class Adam(GD):
@@ -113,6 +114,7 @@ class Adam(GD):
             self.m[i] = self.momentum * self.m[i] + (1 - self.momentum) * p.g
             self.r[i] = self.rms * self.r[i] + (1 - self.rms) * p.g**2
             p.data -= self.learnRate * (self.m[i] / np.sqrt(self.r[i] + 1e-8))
+            p.reset()
 
 
 def decay(step, totalSteps, minmax):
