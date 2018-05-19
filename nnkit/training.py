@@ -3,7 +3,7 @@
 # Copyright (c) 2018 Federico Saldarini
 # https://www.linkedin.com/in/federicosaldarini
 # https://github.com/saldavonschwartz
-# http://0xfede.io
+# https://0xfede.io
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
