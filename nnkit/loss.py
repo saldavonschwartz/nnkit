@@ -103,17 +103,20 @@ class CELoss(NetOp):
         :param t: NetVar: target.
         """
         b = len(t.data)
+        # pData = np.maximum(1e-8, p.data)
 
         super().__init__(
-            -np.mean(np.sum(t.data * np.log(p.data), axis=1)),
+            -np.mean(np.sum(t.data * np.nan_to_num(np.log(p.data)), axis=1)),
             p, t
         )
 
         self.cache = b
 
     def _back(self, p, t):
+        # pData = np.maximum(1e-8, p.data)
+
         b = self.cache
         p.g += self.g * (p.data - t.data) / b
-        t.g += self.g * -np.log(p.data) / b
+        t.g += self.g * -np.nan_to_num(np.log(p.data)) / b
         super()._back()
 

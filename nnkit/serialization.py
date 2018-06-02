@@ -28,11 +28,11 @@ import json as jsn
 import gzip
 
 
-def save(net, path):
-    """Save a net topology (list of tuples) to a gziped json file."""
+def save(topology, path):
+    """Save topology (list of tuples) to a gziped json file."""
     json = []
 
-    for n in net.topology:
+    for n in topology:
         json.append({
             'op': n[0].__name__,
             'args': [
@@ -47,7 +47,7 @@ def save(net, path):
 
 
 def load(path):
-    """Load net topology (list of tuples) from a gziped json file."""
+    """Load topology (list of tuples) from a gziped json file."""
     with gzip.open(path + '.model.gz', 'rb') as file:
         json = jsn.load(file)
         topology = [(

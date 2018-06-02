@@ -117,6 +117,16 @@ class Adam(GD):
             p.reset()
 
 
+def miniBatch(data, **kwargs):
+    if kwargs.get('size', None):
+        bSize = kwargs['size']
+    elif kwargs.get('count', None):
+        bSize = int(np.ceil(len(data[0]) / kwargs['count']))
+
+    for i in range(0, len(data[0]), bSize):
+        yield data[0][i:i + bSize], data[1][i:i + bSize], i
+
+
 def decay(step, totalSteps, minmax):
     """Exponentially decay a value over a fixed number of steps.
 

@@ -9,8 +9,18 @@ feeding nodes into other nodes to describe a computation.
 
 See `this article <https://0xfede.io/2018/05/18/nnkit.html>`_ for more info on how the framework works.
 
-Modules
-=======
+Dependencies:
+=============
+* `numpy <http://www.numpy.org>`_.
+
+Installation:
+=============
+You can `pip install nnkit`, in which case Numpy will also be installed.
+Otherwise you can download the source and manually install numpy if necessary.
+
+
+Modules:
+========
 
 The following is a list of net nodes and optimizers in the framework, along with the framework
 version in which they were added.
@@ -48,4 +58,3 @@ training:
 ---------
 * Gradient descent w/ momentum (1.0)
 * Adam / RMSProp (1.0)
-
