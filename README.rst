@@ -4,14 +4,14 @@ NNKit: A Python framework for creating dynamic neural networks
 NNKit is a framework for creating and training neural network models.
 
 It is based on the concept of dynamic computation graphs, meaning that graph topology can change at runtime. This approach allows for faster iteration and experimentation and is especially well suited to tasks with inputs of varying length,
-like those in sequential models (i.e. RNNs). NNKit graphs particularly are implicitly recreated on each forward pass, as a consequence of
+like those in sequential models (i.e. RNNs). NNKit graphs are implicitly recreated on each forward pass, as a consequence of
 feeding nodes into other nodes to describe a computation.
 
 See `this article <https://0xfede.io/2018/05/18/nnkit.html>`_ for more info on how the framework works.
 
 Dependencies:
 =============
-* `numpy <http://www.numpy.org>`_.
+- `numpy <http://www.numpy.org>`_.
 
 Installation:
 =============
