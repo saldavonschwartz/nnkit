@@ -111,12 +111,14 @@ class Tanh(NetOp):
 class SoftMax(NetOp):
     """Softmax activation.
 
-    y = e^x_i/∑{X}:x_j, ∀x_i in X:
+    y = e^x_i/∑{X}:e^{x_j}, ∀x_i in X:
     """
     def __init__(self, x):
         """
         :param x: NetVar: input.
         """
+
+        # For numerical stability. See: http://cs231n.github.io/linear-classify/#softmax
         ex = np.exp(x.data - np.max(x.data, axis=1, keepdims=True))
 
         super().__init__(
