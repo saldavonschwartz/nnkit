@@ -23,12 +23,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from copy import deepcopy
 import numpy as np
 """The element type of numpy arrays in the .data property of all nodes throughout the framework."""
 dtype = np.float32
 
 """Framework version"""
-version = '1.3.2'
+version = '1.4.0'
 
 
 class NetVar:
@@ -173,6 +174,12 @@ class FFN:
         self.topology = list(topology)
         self.layers = []
 
+    def __deepcopy__(self, memodict={}):
+        return type(self)(*[
+            [NetVar(np.copy(n.data)) if type(n) is NetVar else n if type(n) is type else deepcopy(n) for n in layer]
+            for layer in self.topology
+        ])
+
     @property
     def vars(self):
         """Get the network's fixed variables.
@@ -217,7 +224,7 @@ class FFN:
 from .initialization import *
 from .regularization import *
 from .normalization import *
-from .training import *
+from .optimization import *
 from .activation import *
 from .arithmetic import *
 from .loss import *

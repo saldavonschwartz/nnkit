@@ -127,16 +127,6 @@ def miniBatch(data, **kwargs):
         yield data[0][i:i + bSize], data[1][i:i + bSize], i
 
 
-def decay(step, totalSteps, minmax):
-    """Exponentially decay a value over a fixed number of steps.
-
-    Useful for implementing hyperparameter decay (i.e. learn rate decay).
-    """
-    slope = (minmax[0] - minmax[1]) / totalSteps
-    val = max(slope * step + minmax[1], minmax[0])
-    return val
-
-
 
 
 

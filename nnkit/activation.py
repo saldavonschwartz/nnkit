@@ -108,7 +108,7 @@ class Tanh(NetOp):
         super()._back()
 
 
-class SoftMax(NetOp):
+class Softmax(NetOp):
     """Softmax activation.
 
     y = e^x_i/∑{X}:e^{x_j}, ∀x_i in X:

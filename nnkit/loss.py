@@ -90,7 +90,7 @@ class L2Loss(NetOp):
 class CELoss(NetOp):
     """Cross Entropy Loss.
 
-    y = -1/B * ∑{B}t_i*ln(p_i)
+    y = -1/B * ∑{B}(t_i*ln(p_i))
 
     Where:
     . p: prediction.
@@ -120,3 +120,40 @@ class CELoss(NetOp):
         t.g += self.g * -np.nan_to_num(np.log(p.data)) / b
         super()._back()
 
+
+class HuberLoss(NetOp):
+    """Huber Loss.
+
+    y = ∑{B}(
+        1/2 * (p_i-t_i)^2       :if |p_i-t_i| <= d
+        d * |p_i-t_i| - d^2/2)  :if |p_i-t_i| > d
+    )
+
+    Where:
+    . p: prediction.
+    . t: target.
+    . B: batch size.
+    """
+    def __init__(self, p, t, d=1):
+        """
+        :param p: NetVar: prediction.
+        :param t: NetVar: target.
+        :param d: float: delta.
+        """
+        diff = p.data - t.data
+        abs = np.abs(diff)
+        loss = np.where(abs <= d, 0.5 * np.square(diff), d*abs - 0.5*(d**2))
+        super().__init__(
+            .5 * np.sum(loss),
+            p, t
+        )
+
+        self.cache = diff, abs, d
+
+    def _back(self, p, t):
+        b = len(t.data)
+        diff, abs, d= self.cache
+        dx = np.where(abs <= d, p.data - t.data, d * np.sign(p.data - t.data))/b
+        p.g += dx
+        t.g -= dx
+        super()._back()
