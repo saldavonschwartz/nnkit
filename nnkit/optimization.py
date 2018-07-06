@@ -31,7 +31,7 @@ class Optimizer:
 
     Optimizers implement the minimization step when training a neural net,
     which consists of adjusting parameter values in the direction opposite of the gradient of
-    the network output w.r.t. each parameter.
+    the network w.r.t. each parameter.
 
     Attributes:
     . learnRate: [0,1]

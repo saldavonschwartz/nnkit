@@ -37,16 +37,16 @@ class NetVar:
 
     Variables are the building blocks of a network and hold data (their value) which gets
     propagated and transformed throughout a network. They also have a gradient (g) property
-    which holds the partial derivative of a network's implemented function w.r.t. the variable.
+    which holds the gradient of a network's implemented function w.r.t. the variable.
 
-    Whether derivatives w.r.t a variable are computed depends on the implementation of an
+    Whether gradients w.r.t a variable are computed depends on the implementation of an
     operator node taking the variable as an input.
 
     Whether a variable is optimized as a learnable parameter of a network depends on derivatives
     for it being computed and it being passed to an optimizer's list of parameters.
 
     Attributes:
-    . g: this node's gradient (technically, the partial derivative of a network's output w.r.t. this variable).
+    . g: the gradient of a network's implemented function w.r.t. the variable.
     """
     def __init__(self, data=None):
         """Create a variable, optionally initializing it to a value.
@@ -54,7 +54,7 @@ class NetVar:
         :param data: an optional list or numpy array to initialize the variable with.
         This can be modified or completely replaced after initialization too.
 
-        A variable's data also determines the shape of its gradient.
+        A variable's data also determines the shape of its g property.
         """
         self.g, self._data = None, None
 
@@ -73,7 +73,7 @@ class NetVar:
     def data(self, data):
         """Set this variable's value
 
-        Setting a variable's value implies resetting its gradient.
+        Setting a variable's value implies resetting its g property.
 
         :param data: a list or numpy array.
         """
@@ -88,7 +88,7 @@ class NetVar:
         self.reset()
 
     def reset(self):
-        """Reset this variable's gradient."""
+        """Reset this variable's g property."""
         if self.data is None:
             self.g = None
         else:
@@ -104,7 +104,7 @@ class NetOp(NetVar):
 
     Operators take other variables as inputs (which become their parents in
     the network) and their values are the result of applying transformations on
-    those inputs. They also provide the entry point to backpropagation of gradients.
+    those inputs. They also provide the entry point to backpropagation of gradients thru chain rule.
 
     Attributes:
     . parents: this node's parents.
@@ -133,12 +133,12 @@ class NetOp(NetVar):
         self._back(*self.parents)
 
     def _back(self, *parents):
-        # Compute this node's partial derivatives w.r.t its parents (a.k.a.: parents' gradients).
+        # Compute this node's gradient w.r.t its parents.
         #
         # Subclasses should override this method or provide one with explicit parents.
         #
         # The subclass method should:
-        # 1. Update parents' gradients.
+        # 1. Update gradients w.r.t parents.
         # 2. Call this implementation (without arguments) to backprop to the parents.
         #
         # :param parents: the parents of this node. Subclasses can use this
