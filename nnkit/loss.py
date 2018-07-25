@@ -26,16 +26,19 @@
 import numpy as np
 from . import NetOp
 
+"""These functions behave as loss or 'cost'/'objective', depending on whether they are passed as single or many 
+sample points respectively, since in the case of many sample points, they compute the average of all loses.
+"""
+
 
 class L1Loss(NetOp):
     """L1 Norm Loss.
 
-    y = 1/B ∑{B}(|p_i-t_i|)
+    y = |p-t|
 
     Where:
     . p: prediction.
     . t: target.
-    . B: batch size.
     """
     def __init__(self, p, t):
         """
@@ -43,7 +46,7 @@ class L1Loss(NetOp):
         :param t: NetVar: target.
         """
         super().__init__(
-            np.mean(np.abs(p.data - t.data)),
+            np.mean(np.sum(np.abs(p.data - t.data), axis=1)),
             p, t
         )
 
@@ -59,13 +62,14 @@ class L1Loss(NetOp):
 
 class L2Loss(NetOp):
     """L2 (squared) Norm Loss.
+    This is really MSE (mean squared error) with
+    a 1/2 to cancel out the 2 in the derivative...
 
-    y = 1/2B * ∑{B}(p_i-t_i)^2
+    y = 1/2 * (p-t)^2
 
     Where:
     . p: prediction.
     . t: target.
-    . B: batch size.
     """
     def __init__(self, p, t):
         """
@@ -73,7 +77,7 @@ class L2Loss(NetOp):
         :param t: NetVar: target.
         """
         super().__init__(
-            .5 * np.mean(np.square(p.data - t.data)),
+            .5 * np.mean(np.sum((p.data - t.data)**2, axis=1)),
             p, t
         )
 
@@ -90,12 +94,11 @@ class L2Loss(NetOp):
 class CELoss(NetOp):
     """Cross Entropy Loss.
 
-    y = -1/B * ∑{B}(t_i*ln(p_i))
+    y = -t*ln(p)
 
     Where:
     . p: prediction.
     . t: target.
-    . B: batch size.
     """
     def __init__(self, p, t):
         """
@@ -103,18 +106,15 @@ class CELoss(NetOp):
         :param t: NetVar: target.
         """
         b = len(t.data)
-        # pData = np.maximum(1e-8, p.data)
 
         super().__init__(
-            -np.mean(np.sum(t.data * np.nan_to_num(np.log(p.data)), axis=1)),
+            -np.mean(np.sum(t.data * np.log(p.data), axis=1)),
             p, t
         )
 
         self.cache = b
 
     def _back(self, p, t):
-        # pData = np.maximum(1e-8, p.data)
-
         b = self.cache
         p.g += self.g * (p.data - t.data) / b
         t.g += self.g * -np.nan_to_num(np.log(p.data)) / b
@@ -123,28 +123,29 @@ class CELoss(NetOp):
 
 class HuberLoss(NetOp):
     """Huber Loss.
+    Combination of MSE and L1.
 
-    y = ∑{B}(
-        1/2 * (p_i-t_i)^2       :if |p_i-t_i| <= d
-        d * |p_i-t_i| - d^2/2)  :if |p_i-t_i| > d
-    )
+    y = {
+        1/2 * (p-t)^2       :if |p-t| <= d
+        d * |p-t| - d^2/2)  :if |p-t| > d
+    }
 
     Where:
     . p: prediction.
     . t: target.
-    . B: batch size.
     """
     def __init__(self, p, t, d=1):
         """
         :param p: NetVar: prediction.
         :param t: NetVar: target.
-        :param d: float: delta.
+        :param d: float: delta, the threshold to select between MSE and L1.
         """
         diff = p.data - t.data
         abs = np.abs(diff)
         loss = np.where(abs <= d, 0.5 * np.square(diff), d*abs - 0.5*(d**2))
+
         super().__init__(
-            .5 * np.sum(loss),
+            np.mean(np.sum(loss, axis=1)),
             p, t
         )
 
@@ -152,8 +153,9 @@ class HuberLoss(NetOp):
 
     def _back(self, p, t):
         b = len(t.data)
-        diff, abs, d= self.cache
-        dx = np.where(abs <= d, p.data - t.data, d * np.sign(p.data - t.data))/b
+        diff, abs, d = self.cache
+        dx = np.where(abs <= d, diff, d * np.sign(diff))/b
         p.g += dx
         t.g -= dx
         super()._back()
+

@@ -29,7 +29,7 @@ import numpy as np
 dtype = np.float32
 
 """Framework version"""
-version = '1.4.0'
+version = '1.4.1'
 
 
 class NetVar:
