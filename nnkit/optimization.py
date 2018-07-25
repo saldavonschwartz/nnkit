@@ -68,7 +68,7 @@ class GD(Optimizer):
     . learnRate: α ∈ [0,1]
     how big of an adjustment each parameter undergoes during an optimization step.
 
-    . momentum: β1 ∈ [0,1]
+    . momentum: β1 ∈ [0,1)
     over how many samples the exponential moving average m takes place.
     If set to 0 momentum is disabled and the algorithm becomes simply gradient descent.
     """
@@ -97,7 +97,7 @@ class Adam(GD):
     . learnRate: α ∈ [0,1]
     how big of an adjustment each parameter undergoes during an optimization step.
 
-    . momentum: β1 ∈ [0,1]
+    . momentum: β1 ∈ [0,1)
     over how many samples the exponential moving average m takes place.
     If set to 0 momentum is disabled and the algorithm becomes RMSProp
 
@@ -115,16 +115,6 @@ class Adam(GD):
             self.r[i] = self.rms * self.r[i] + (1 - self.rms) * p.g**2
             p.data -= self.learnRate * (self.m[i] / np.sqrt(self.r[i] + 1e-8))
             p.reset()
-
-
-def miniBatch(data, **kwargs):
-    if kwargs.get('size', None):
-        bSize = kwargs['size']
-    elif kwargs.get('count', None):
-        bSize = int(np.ceil(len(data[0]) / kwargs['count']))
-
-    for i in range(0, len(data[0]), bSize):
-        yield data[0][i:i + bSize], data[1][i:i + bSize], i
 
 
 

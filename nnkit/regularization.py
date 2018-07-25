@@ -28,15 +28,14 @@ from . import NetOp
 
 
 class L2Reg(NetOp):
-    """L2 (squared) Norm Regularization.
+    """L2 Regularization (i.e.: ridge regression).
 
-    y = loss + λ/2B * ∑{P}(||p_i||^2)
+    y = loss + λ/2B * Σ(||W^l||^2)
 
     Where:
     . λ: regularization hyperparameter. i.e.: by how much to penalize large parameter values.
+    . ||W^l||^2: Frobenius squared norm for weights of each layer.
     . B: batch size.
-    . P: parameters to penalize.
-    . ||p_i||^2: Frobenius squared norm of a parameter.
 
     This node should be appended after a loss node during training.
     """
@@ -45,13 +44,13 @@ class L2Reg(NetOp):
         :param l: NetVar: loss from forward pass.
         :param params: list of NetVar: parameters for which to compute norm.
         :param r: by how much to penalize overfitting.
-        :param t: NetVar: target as passed to loss (to derive batch size).
+        :param t: targets, to infer batch size.
         """
         b = len(t.data)
-        frobeniusSquared = np.sum([np.linalg.norm(p.data)**2 for p in params])
+        norms = np.hstack([np.linalg.norm(p, ord='fro') ** 2 for p in params])
 
         super().__init__(
-            l.data + r / (2 * b) * frobeniusSquared,
+            l.data + (r / (2*b)) * np.sum(norms),
             l, *params
         )
 
@@ -62,7 +61,7 @@ class L2Reg(NetOp):
         l.g += self.g
 
         for p in params:
-            p.g += r / b * p.data
+            p.g += r * p.data / b
 
         super()._back()
 
